@@ -21,19 +21,22 @@ export const authConfig = {
           .from(users)
           .where(eq(users.id, user.id))
           .execute();
+        session.user.role = dbUser[0].role || "user";
       }
       return session;
     },
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const paths = ["/me", "/create"];
-      const isProtected = paths.some((path) =>
-        nextUrl.pathname.startsWith(path)
-      );
+      const isLoggedIn = !auth?.user;
+      const isAdmin = nextUrl.pathname.startsWith("/admin");
+      const isProtected = nextUrl.pathname.startsWith("/protected");
       if (isProtected && !isLoggedIn) {
-        const redirectUrl = new URL("/api/auth/signin", nextUrl.origin);
+        const redirectUrl = new URL("api/auth/signin", nextUrl.origin);
         redirectUrl.searchParams.append("callbackUrl", nextUrl.href);
         return Response.redirect(redirectUrl);
+      }
+
+      if (isAdmin && auth?.user?.role !== "admin") {
+        return Response.redirect(new URL("/unauthoized", nextUrl.origin));
       }
       return true;
     },
@@ -41,3 +44,11 @@ export const authConfig = {
 } satisfies NextAuthConfig;
 
 export const { handlers, auth, signOut } = NextAuth(authConfig);
+
+export const isAdmin = async () => {
+  const session = await auth();
+  if (!session?.user) {
+    return false;
+  }
+  return session.user.role === "admin";
+};
