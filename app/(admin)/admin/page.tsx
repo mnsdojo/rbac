@@ -1,23 +1,18 @@
-import { isAdmin } from "@/lib/auth";
-import { notFound } from "next/navigation";
-import React from "react";
 
-async function Page() {
-  const session = await isAdmin();
-  if (!session) {
-    return (
-      <div>
-        <p>You're not authorized to view this page!</p>
-      </div>
-    );
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
+import AdminDashboard from './admin-dashboard'
+
+export default async function AdminPage() {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect('/api/auth/signin')
   }
 
-  return (
-    <div>
-      <h1>Hello Admin here</h1>
-      <p>You are admin</p>
-    </div>
-  );
-}
+  if (session.user.role !== 'admin') {
+    redirect('/unauthorized')
+  }
 
-export default Page;
+  return <AdminDashboard user={session.user} />
+}

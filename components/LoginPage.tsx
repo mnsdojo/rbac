@@ -1,4 +1,5 @@
-import LoginButton from "@/components/LoginButton";
+
+import LoginButton from "./LoginButton";
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
